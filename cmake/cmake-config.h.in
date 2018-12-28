@@ -1,0 +1,34 @@
+#pragma once
+
+#ifdef HAVE_CONFIG_H
+
+#cmakedefine01 HAVE_ZIP_FLAGS_T
+#cmakedefine01 HAVE_ZIP_SOURCE_T
+#cmakedefine01 HAVE_ZIP_FL_ENC_GUESS
+#cmakedefine01 HAVE_ZIP_H
+#cmakedefine01 KIVM_THREADED
+#cmakedefine01 KIVM_ARCH_x86
+#cmakedefine01 KIVM_ARCH_x86_64
+#cmakedefine01 KIVM_ARCH_arm
+#cmakedefine01 KIVM_ARCH_aarch64
+
+#define KIVM_ARCH_NAME L"@ARCH_NAME@"
+
+#if KIVM_ARCH_x86_64 || KIVM_ARCH_aarch64
+#define KIVM_ARCH_DATA_MODEL L"64"
+#else
+#define KIVM_ARCH_DATA_MODEL L"32"
+#endif
+
+#if HAVE_ZIP_H
+#define KIVM_JAR_CLASS_LOADING
+#if HAVE_ZIP_SOURCE_T
+#define KIVM_ZIP_OPEN_SOURCE
+#endif
+#endif
+
+#if KIVM_ARCH_x86_64 || KIVM_ARCH_x86
+#define KIVM_SUPPORT_CS8
+#endif
+
+#endif
