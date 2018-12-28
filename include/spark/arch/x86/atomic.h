@@ -5,9 +5,9 @@
 
 #include <compileTimeConfig.h>
 
-#if KIVM_ARCH_x86 || KIVM_ARCH_x86_64
+#if SPARK_ARCH_x86 || SPARK_ARCH_x86_64
 
-#if KIVM_ARCH_x86_64
+#if SPARK_ARCH_x86_64
 #define mbarrier() asm volatile("mfence":::"memory")
 #define LOCK_PREFIX "\n\tlock; "
 #else
@@ -17,7 +17,7 @@
 #define __X86_CASE_B 1
 #define __X86_CASE_W 2
 #define __X86_CASE_L 4
-#ifdef KIVM_ARCH_x86_64
+#ifdef SPARK_ARCH_x86_64
 #define __X86_CASE_Q 8
 #else
 #define __X86_CASE_Q (-1)

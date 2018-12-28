@@ -7,7 +7,7 @@
 #include <compileTimeConfig.h>
 #include <kivm/kivm.h>
 
-#if KIVM_ARCH_aarch64
+#if SPARK_ARCH_aarch64
 
 #define mbarrier()  asm volatile("dmb ish" ::: "memory")
 

@@ -5,7 +5,7 @@
 
 #include <compileTimeConfig.h>
 
-#if KIVM_ARCH_arm
+#if SPARK_ARCH_arm
 
 /*
  * Use the __kuser_memory_barrier helper in the CPU helper page. See
