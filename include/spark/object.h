@@ -23,6 +23,16 @@ namespace spark {
         void setTagged(bool tagged) {
             tag = tagged ? TAG_MARKED : TAG_NONE;
         }
+
+        bool operator==(ObjectHeader &&other) const noexcept {
+            return other.forwarding == this->forwarding
+                   && other.tag == this->tag;
+        }
+
+        bool operator==(const ObjectHeader &other) const noexcept {
+            return other.forwarding == this->forwarding
+                   && other.tag == this->tag;
+        }
     };
 
     class Object {

@@ -72,16 +72,20 @@ namespace spark {
 
         template<typename T>
         static void write(Object *o, Offset offset, T value) {
+            updateHeader(o, o->objectHeader.forwarding);
+            *(o->objectHeader.forwarding + offset) = value;
+        }
+
+        static void updateHeader(Object *o, Object *forwarding) {
             if (o->objectHeader.isTagged()) {
                 ObjectHeader newHeader;
-                newHeader.forwarding = o->objectHeader.forwarding;
+                newHeader.forwarding = forwarding;
                 newHeader.setTagged(false);
 
                 compareAndSwap(&o->objectHeader,
                     o->objectHeader,
                     newHeader);
             }
-            *(o->objectHeader.forwarding + offset) = value;
         }
     };
 }
