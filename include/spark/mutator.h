@@ -22,3 +22,66 @@
 #include <spark/arch/x86_64/atomic.h>
 
 #endif
+
+#include <spark/types.h>
+
+namespace spark {
+    class Mutator {
+    private:
+        template<typename T>
+        static bool compareAndSwap(T *ptr, T old, T new_) {
+            return cmpxchg(ptr, old, new_) == new_;
+        }
+
+        static bool compareAndSwapObject(Object **ptr, Object *old, Object *new_) {
+            // TODO:
+            //  redefine equality for `Object* a == Object* b`
+            //  that it returns true even if `b` is a forwarding pointer to a
+            //  (or vise-versa).
+            return compareAndSwap(ptr, old, new_);
+        }
+
+    public:
+        /**
+         * The Brooks-styled read barrier.
+         * @tparam T filed type
+         * @param o object
+         * @param offset filed offset
+         * @return field value
+         */
+        template<typename T>
+        static T read(Object *o, Offset offset) {
+            return *(o->objectHeader.forwarding + offset);
+        }
+
+        /**
+         * The read barrier specialized for object references,
+         * in which both the object being loaded from
+         * as well as the value loaded are forwarded.
+         * @param o object itself
+         * @param offset field offset
+         * @return field object
+         */
+        static Object *read(Object *o, Offset offset) {
+            auto result = o->objectHeader.forwarding + offset;
+            if (result != nullptr) {
+                result = result->objectHeader.forwarding;
+            }
+            return result;
+        }
+
+        template<typename T>
+        static void write(Object *o, Offset offset, T value) {
+            if (o->objectHeader.isTagged()) {
+                ObjectHeader newHeader;
+                newHeader.forwarding = o->objectHeader.forwarding;
+                newHeader.setTagged(false);
+
+                compareAndSwap(&o->objectHeader,
+                    o->objectHeader,
+                    newHeader);
+            }
+            *(o->objectHeader.forwarding + offset) = value;
+        }
+    };
+}

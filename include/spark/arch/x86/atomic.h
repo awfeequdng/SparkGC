@@ -66,7 +66,7 @@
         break;      \
     }          \
     default:      \
-        SHOULD_NOT_REACH_HERE();         \
+        break; \
     }          \
     __ret;          \
 })

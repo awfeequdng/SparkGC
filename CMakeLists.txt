@@ -68,7 +68,7 @@ include_directories(include)
 
 set (SPARK_GC_LIBRARY_SRC
         include/spark/object.h
-        include/spark/mutator.h src/spark/dummy.cpp)
+        include/spark/mutator.h src/spark/dummy.cpp include/spark/types.h)
 
 add_library(SparkGC
         ${SPARK_GC_LIBRARY_SRC}
