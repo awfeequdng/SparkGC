@@ -23,7 +23,7 @@
 
 #endif
 
-#include <spark/types.h>
+#include <spark/gc_shared.h>
 
 namespace spark {
     class Mutator {
