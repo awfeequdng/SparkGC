@@ -72,7 +72,7 @@ namespace spark {
                    (getRemaining() < other.getRemaining());
         }
 
-        int getCounter() const {
+        int getAllocateCounter() const {
             return allocateCounter;
         }
 

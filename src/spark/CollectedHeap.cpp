@@ -59,7 +59,7 @@ namespace spark {
             fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
             fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
             fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
-            fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getCounter());
+            fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getAllocateCounter());
         }
     }
 
@@ -78,10 +78,6 @@ namespace spark {
         if (!bestFits.empty()) {
             bestFits.sort();
             HeapBlock *selected = bestFits.front();
-            if (selected->getSize() != SPARK_GC_HEAP_BLOCK) {
-                printf("CollectedHeap: re-blocked block with size %zd is used to allocate %zd bytes\n",
-                    selected->getSize(), size);
-            }
             return selected->allocate(size);
         }
         return nullptr;
@@ -98,8 +94,6 @@ namespace spark {
 
         if (newBlock->getRemaining() > 0) {
             auto remaining = newBlock->shrinkToFit();
-            printf("CollectedHeap: re-blocking %zd bytes after allocating %zd bytes\n",
-                remaining->getSize(), size);
             heapBlocks.push_back(remaining);
         }
 
