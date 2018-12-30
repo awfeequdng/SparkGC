@@ -141,6 +141,10 @@ namespace spark {
             return heapStart + heapSize;
         }
 
+        Size getHeapUsed() const noexcept {
+            return heapSize - heapUnusedSize;
+        }
+
         Size getHeapUnusedSize() const noexcept {
             return heapUnusedSize;
         }

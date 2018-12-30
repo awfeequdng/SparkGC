@@ -40,15 +40,16 @@ namespace spark {
 
     void CollectedHeap::dumpHeap(FILE *file) {
         fprintf(file, "CollectedHeap\n");
-        fprintf(file, "\tHeap start address: %p\n", (void *) heapStart);
-        fprintf(file, "\tHeap size in bytes: %zd\n", heapSize);
+        fprintf(file, "\tHeap start address: %p\n", (void *) getHeapStart());
+        fprintf(file, "\tHeap end address  : %p\n", (void *) getHeapEnd());
+        fprintf(file, "\tHeap size in bytes: %zd\n", getHeapSize());
         fprintf(file, "\tHeap pre-sized chunks: %zd(%zd blocks)\n",
-            heapSize - heapUnusedSize, heapBlocks.size());
-        fprintf(file, "\tHeap unused size     : %zd\n", heapUnusedSize);
+            getHeapUsed(), heapBlocks.size());
+        fprintf(file, "\tHeap unused size     : %zd\n", getHeapUnusedSize());
         fprintf(file, "\tHeap unused start    : %p\n", (void *) heapUnUsedStart);
         fprintf(file, "\n");
         fprintf(file, "Heap pre-sized chunk details: %zd(%zd blocks)\n",
-            heapSize - heapUnusedSize, heapBlocks.size());
+            getHeapUsed(), heapBlocks.size());
 
         int index = 0;
         for (auto heapBlock : heapBlocks) {
