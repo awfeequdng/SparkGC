@@ -13,3 +13,7 @@ Small and medium object allocation is done from bins of pre-sized chunks. Large 
 
 When a request for a large object is received, the heap will select a range of free blocks on a best-fit basis. If there is more than one fit, it selects the one starting at the lowest address. If this range is larger than the requested large object (remembering that large objects are allocated on block boundaries), then it will be split to return an object of the requested size, and a remainder. The remainder will be reinserted into the free block list. Initially the block list consists of several empty blocks according to the `SPARK_GC_HEAP_UNUSED_FACTOR`. We will protect the block list using a mutual exclusion lock, which is acquired for the duration of an individual operation on the list.
 
+### The Color Bitmap
+The heap maintains a color bitmap, two bits for every four bytes of heap memory, with very fast mapping from an object to its color and vice versa. 
+Sweep scans this bitmap without touching the objects. We arranged the mapping so that the color for two consecutive objects is never in the same byte of bitmap, so that accessing of the color can occur without synchronization. 
+The color bitmap also enables fast conservative pointer detection while scanning the heaps.
