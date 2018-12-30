@@ -17,6 +17,7 @@ int main() {
     auto heap = new CollectedHeap(memory, memorySize);
     heap->dumpHeap(stdout);
     delete heap;
+    free(memory);
     return EXIT_SUCCESS;
 }
 
