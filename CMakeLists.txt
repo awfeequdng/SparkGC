@@ -6,8 +6,9 @@ include(CheckIncludeFiles)
 include(CheckCXXCompilerFlag)
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
-
+enable_testing()
 set(CMAKE_MODULE_PATH "${CMCMAKE_MODULE_PATH}" "${CMAKE_SOURCE_DIR}/cmake")
+
 
 #### Determine C++11
 check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -66,10 +67,21 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake-config.h.in ${CMAKE_BINARY_DIR}/c
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(include)
 
-set (SPARK_GC_LIBRARY_SRC
-        include/spark/object.h
-        include/spark/mutator.h src/spark/dummy.cpp include/spark/gc_shared.h)
+set(SPARK_GC_LIBRARY_SRC
+        include/spark/SparkGC_Shared.h
+        include/spark/SparkGC.h
+        include/spark/CollectedHeap.h
+        include/spark/CollectedObject.h src/spark/CollectedHeap.cpp)
 
 add_library(SparkGC
         ${SPARK_GC_LIBRARY_SRC}
         ${SPARK_ARCH_SRC})
+
+#### ctest setup
+macro(add_test_target name)
+    add_executable(test-${name} test/test-${name})
+    target_link_libraries(test-${name} SparkGC)
+    add_test(${name} test-${name})
+endmacro()
+
+add_test_target(create-block-tree)

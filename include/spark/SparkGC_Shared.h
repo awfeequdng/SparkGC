@@ -5,8 +5,17 @@
 
 #include <cstdlib>
 
+#define SPARK_GC_MUTATOR_COUNT 2
+
 namespace spark {
     using Offset = size_t;
+
+    using Size = size_t;
+
+    using Addr = unsigned char *;
+
+    class SparkMutator;
+    class SparkGC;
 
     /**
      * A color abstraction is used to indicate the state of
