@@ -107,6 +107,8 @@ int main() {
             printf("\tobject size = %zd, id = %d\n",
                 obj->getOnStackSize(), obj->getId());
         }
+
+        // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
         current += 4;
     }
 
