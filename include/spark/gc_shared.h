@@ -42,8 +42,9 @@ namespace spark {
     /**
      * Each of the mutator threads and the collector thread have its own status
      * variable. Mutator threads acknowledge a change in the collector’s status
-     * by changing their own status to the corresponding status,
+     * by changing their own status to that of the collector，
      * which is called a handshake.
+     * Handshake is used to avoid expensive synchronizations.
      * Note that: A mutator may not handshake while it is updating an object slot
      * or creating an object.
      *
@@ -76,9 +77,18 @@ namespace spark {
      * and gray if it is created at the point where the collector is sweeping.
      * Starting with the completion of sweep all objects are created white.
      */
-    enum GCState {
+    enum GCHandshakeState {
         GC_SYNC1,
         GC_SYNC2,
         GC_ASYNC,
+    };
+
+
+    enum GCStage {
+        GC_CLEAR_OR_MARKING,
+        GC_TRACING,
+        GC_REF_PROCESSING,
+        GC_SWEEPING,
+        GC_RESTING
     };
 }
