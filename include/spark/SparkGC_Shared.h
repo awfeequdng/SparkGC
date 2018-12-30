@@ -7,6 +7,20 @@
 
 #define SPARK_GC_MUTATOR_COUNT 2
 
+/**
+ * sizeof(intOopDesc)
+ */
+#define SPARK_GC_HEAP_SMALL 32
+
+/**
+ * sizeof(instanceOopDesc)
+ */
+#define SPARK_GC_HEAP_MEDIUM 48
+
+#define SPARK_GC_HEAP_BLOCK 128
+
+#define SPARK_GC_HEAP_UNUSED_FACTOR (0.4f)
+
 namespace spark {
     using Offset = size_t;
 
@@ -26,26 +40,26 @@ namespace spark {
         /**
          * Memory that is unallocated.
          */
-        BLUE,
+        GC_COLOR_BLUE,
 
         /**
          * Memory that has not been scanned by the collector
          * during the current GC cycle. Memory left white after
          * the collector has completed tracing is garbage.
          */
-        WHITE,
+        GC_COLOR_WHITE,
 
         /**
          * Objects marked by the collector, but
          * whose children may have not been marked.
          */
-        GRAY,
+        GC_COLOR_GRAY,
 
         /**
          * Objects marked by the collector,
          * whose direct children have also been marked.
          */
-        BLACK,
+        GC_COLOR_BLACK,
     };
 
     /**

@@ -7,20 +7,6 @@
 #include <cstdio>
 #include <list>
 
-/**
- * sizeof(intOopDesc)
- */
-#define SPARK_GC_HEAP_SMALL 32
-
-/**
- * sizeof(instanceOopDesc)
- */
-#define SPARK_GC_HEAP_MEDIUM 48
-
-#define SPARK_GC_HEAP_BLOCK 128
-
-#define SPARK_GC_HEAP_UNUSED_FACTOR (0.4f)
-
 namespace spark {
     class HeapBlock {
     private:
