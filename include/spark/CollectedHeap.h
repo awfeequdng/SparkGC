@@ -27,6 +27,7 @@ namespace spark {
         Size blockSize;
         Addr blockStart;
         Addr current;
+        int allocateCounter;
 
     public:
         HeapBlock(Addr blockStart, Size blockSize);
@@ -59,6 +60,7 @@ namespace spark {
             if (canAfford(size)) {
                 Addr obj = current;
                 current += size;
+                ++allocateCounter;
                 return obj;
             }
             return nullptr;
@@ -69,6 +71,12 @@ namespace spark {
                    (blockStart < other.blockStart) :
                    (getRemaining() < other.getRemaining());
         }
+
+        int getCounter() const {
+            return allocateCounter;
+        }
+
+        HeapBlock *shrinkToFit();
     };
 
     class CollectedHeap {
@@ -96,15 +104,25 @@ namespace spark {
         }
 
         static bool isLargeObject(Size size) {
-            return inRange(size, SPARK_GC_HEAP_MEDIUM, SPARK_GC_HEAP_BLOCK);
+            return size > SPARK_GC_HEAP_MEDIUM;
         }
 
-    public:
+        static bool isSuperObject(Size size) {
+            return size > SPARK_GC_HEAP_BLOCK;
+        }
+
+    private:
         Size heapSize;
         Size heapUnusedSize;
         Addr heapStart;
         Addr heapUnUsedStart;
 
+    private:
+        Addr allocateLarge(Size size);
+
+        HeapBlock* newBlockFromUnused(Size size);
+
+    public:
         Tree<HeapBlock *> heapBlocks;
 
         CollectedHeap(Addr heapStart, Size heapSize);
@@ -115,12 +133,16 @@ namespace spark {
             return heapSize;
         }
 
-        Addr getHeapStart() noexcept {
+        Addr getHeapStart() const noexcept {
             return heapStart;
         }
 
-        Addr getHeapEnd() noexcept {
+        Addr getHeapEnd() const noexcept {
             return heapStart + heapSize;
+        }
+
+        Size getHeapUnusedSize() const noexcept {
+            return heapUnusedSize;
         }
 
         Addr allocate(Size size);

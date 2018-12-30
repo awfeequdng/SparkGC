@@ -8,10 +8,20 @@ namespace spark {
 
     HeapBlock::HeapBlock(Addr blockStart, Size blockSize)
         : blockStart(blockStart), blockSize(blockSize), current(blockStart) {
+        allocateCounter = 0;
+    }
+
+    HeapBlock *HeapBlock::shrinkToFit() {
+        Size size = getRemaining();
+        Addr start = current;
+        auto block = new HeapBlock(start, size);
+        blockSize = current - blockStart;
+        return block;
     }
 
     CollectedHeap::CollectedHeap(Addr heapStart, Size heapSize)
-        : heapStart(heapStart), heapSize(heapSize) {
+        : heapStart(heapStart), heapSize(heapSize),
+          heapUnUsedStart(heapStart), heapUnusedSize(heapSize) {
         createBlockTree();
     }
 
@@ -20,18 +30,11 @@ namespace spark {
             throw std::exception();
         }
 
-        heapUnusedSize = static_cast<Size>(heapSize * SPARK_GC_HEAP_UNUSED_FACTOR);
-        heapUnUsedStart = heapStart + (heapSize - heapUnusedSize);
-
-        Addr current = heapStart;
-        while (current < heapUnUsedStart) {
-            auto block = new HeapBlock(current, SPARK_GC_HEAP_BLOCK);
+        Size unusedMaxSize = static_cast<Size>(heapSize * SPARK_GC_HEAP_UNUSED_FACTOR);
+        while (heapUnusedSize > unusedMaxSize) {
+            auto block = newBlockFromUnused(SPARK_GC_HEAP_BLOCK);
             heapBlocks.push_back(block);
-            current += SPARK_GC_HEAP_BLOCK;
         }
-
-        heapUnUsedStart = current;
-        heapUnusedSize = getHeapEnd() - current;
         heapBlocks.sort();
     }
 
@@ -55,6 +58,51 @@ namespace spark {
             fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
             fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
             fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
+            fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getCounter());
         }
+    }
+
+    Addr CollectedHeap::allocate(Size size) {
+        if (isLargeObject(size)) {
+            return allocateLarge(size);
+        }
+
+        Tree<HeapBlock *> bestFits;
+        for (auto heapBlock : heapBlocks) {
+            if (heapBlock->canAfford(size)) {
+                bestFits.push_back(heapBlock);
+            }
+        }
+
+        if (!bestFits.empty()) {
+            bestFits.sort();
+            HeapBlock *selected = bestFits.front();
+            return selected->allocate(size);
+        }
+        return nullptr;
+    }
+
+    Addr CollectedHeap::allocateLarge(Size size) {
+        auto newBlock = newBlockFromUnused(isSuperObject(size) ? size : SPARK_GC_HEAP_BLOCK);
+        Addr obj = newBlock->allocate(size);
+        heapBlocks.push_back(newBlock);
+
+        if (newBlock->getRemaining() > 0) {
+            auto remaining = newBlock->shrinkToFit();
+            heapBlocks.push_back(remaining);
+        }
+
+        heapBlocks.sort();
+        return obj;
+    }
+
+    HeapBlock *CollectedHeap::newBlockFromUnused(Size size) {
+        if (heapUnusedSize >= size) {
+            auto block = new HeapBlock(heapUnUsedStart, size);
+            heapUnusedSize -= size;
+            heapUnUsedStart += size;
+            return block;
+        }
+        return nullptr;
     }
 }

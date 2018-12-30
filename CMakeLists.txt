@@ -85,3 +85,4 @@ macro(add_test_target name)
 endmacro()
 
 add_test_target(create-block-tree)
+add_test_target(block-shrink-to-fit)
