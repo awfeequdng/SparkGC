@@ -65,9 +65,9 @@ namespace spark {
         }
 
         bool operator<(const HeapBlock &other) {
-            return (blockSize == other.blockSize) ?
+            return (getRemaining() == other.getRemaining()) ?
                    (blockStart < other.blockStart) :
-                   (blockSize < other.blockSize);
+                   (getRemaining() < other.getRemaining());
         }
     };
 
@@ -122,6 +122,8 @@ namespace spark {
         Addr getHeapEnd() noexcept {
             return heapStart + heapSize;
         }
+
+        Addr allocate(Size size);
 
         void createBlockTree();
 
