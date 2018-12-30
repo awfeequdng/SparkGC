@@ -78,6 +78,10 @@ namespace spark {
         if (!bestFits.empty()) {
             bestFits.sort();
             HeapBlock *selected = bestFits.front();
+            if (selected->getSize() != SPARK_GC_HEAP_BLOCK) {
+                printf("CollectedHeap: re-blocked block with size %zd is used to allocate %zd bytes\n",
+                    selected->getSize(), size);
+            }
             return selected->allocate(size);
         }
         return nullptr;
@@ -85,11 +89,17 @@ namespace spark {
 
     Addr CollectedHeap::allocateLarge(Size size) {
         auto newBlock = newBlockFromUnused(isSuperObject(size) ? size : SPARK_GC_HEAP_BLOCK);
+        if (newBlock == nullptr) {
+            return nullptr;
+        }
+
         Addr obj = newBlock->allocate(size);
         heapBlocks.push_back(newBlock);
 
         if (newBlock->getRemaining() > 0) {
             auto remaining = newBlock->shrinkToFit();
+            printf("CollectedHeap: re-blocking %zd bytes after allocating %zd bytes\n",
+                remaining->getSize(), size);
             heapBlocks.push_back(remaining);
         }
 
