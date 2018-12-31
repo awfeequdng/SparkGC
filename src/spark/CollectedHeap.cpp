@@ -33,12 +33,10 @@ namespace spark {
         if (heapSize < SPARK_GC_HEAP_BLOCK) {
             throw std::exception();
         }
-
-        Size unusedMaxSize = static_cast<Size>(heapSize * SPARK_GC_HEAP_UNUSED_FACTOR);
-        while (heapUnusedSize > unusedMaxSize) {
-            auto block = newBlockFromUnused(SPARK_GC_HEAP_BLOCK);
-            heapBlocks.push_back(block);
-        }
+        
+        // Initially there is only a single block
+        auto block = newBlockFromUnused(SPARK_GC_HEAP_BLOCK);
+        heapBlocks.push_back(block);
         sort(heapBlocks);
     }
 

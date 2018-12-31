@@ -17,8 +17,6 @@
 
 #define SPARK_GC_HEAP_BLOCK 128
 
-#define SPARK_GC_HEAP_UNUSED_FACTOR (0.4f)
-
 namespace spark {
     using Offset = size_t;
 
