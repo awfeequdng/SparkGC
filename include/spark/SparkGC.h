@@ -7,23 +7,10 @@
 #include <spark/CollectedHeap.h>
 #include <spark/CollectedObject.h>
 #include <spark/ColorBitmap.h>
-#include <vector>
 #include <set>
+#include <stack>
 
 namespace spark {
-    class SparkMutator {
-    public:
-        SparkGC *sparkGC;
-        GCHandshakeState handshakeState;
-        Addr lastRead;
-        Addr lastWrite;
-        GCColor allocationColor;
-        std::vector<CollectedObject *> markBuffer;
-
-    private:
-        void update(Addr obj, Addr newObj);
-    };
-
     class SparkGC {
     private:
         GCHandshakeState handshakeState;
@@ -33,6 +20,8 @@ namespace spark {
         ColorBitmap heapColors;
         CollectedHeap *heap;
         std::set<SparkMutator *> mutators;
+        std::stack<Addr> markBuffer;
+        std::stack<Addr> weakRefs;
 
     private:
         explicit SparkGC(CollectedHeap *heap);
@@ -55,27 +44,60 @@ namespace spark {
 
         void collectorSweep();
 
+        void emptyMarkBuffer();
+
+        void collectorMarkGray(Addr addr);
+
+        void collectorMarkBlack(Addr addr);
+
+        bool queryIsWeakReference(Addr addr);
+
         void toggleColor();
 
         void handshakeMutators(GCHandshakeState state);
 
-        void waitHandshake();
+        void waitHandshake() const;
 
         void postHandshake(GCHandshakeState state);
 
         void postState(GCStage stage);
 
+        Size offsetOf(Addr addr) const;
+
     public:
+
         SparkGC(const SparkGC &) = delete;
 
         SparkGC(SparkGC &&) = delete;
 
         ~SparkGC();
 
+        GCStage getStage() const noexcept {
+            return gcStage;
+        }
+
         void registerMutator(SparkMutator *mutator);
 
         void unregisterMutator(SparkMutator *mutator);
 
         void collect();
+
+        Addr allocate(Size size);
+
+        /**
+         * For mutators.
+         * @param addr
+         */
+        void markGray(SparkMutator *m, Addr addr);
+
+        void setColor(Addr addr, GCColor color);
+
+        GCHandshakeState getHandshakeState() const noexcept {
+            return handshakeState;
+        }
+
+        GCColor getMarkColor() const noexcept {
+            return markColor;
+        }
     };
 }

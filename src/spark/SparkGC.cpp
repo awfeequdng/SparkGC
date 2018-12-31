@@ -2,6 +2,7 @@
 // Created by kiva on 2018-12-31.
 //
 #include <spark/SparkGC.h>
+#include <spark/SparkMutator.h>
 
 namespace spark {
 
@@ -25,23 +26,52 @@ namespace spark {
     }
 
     void SparkGC::markGlobalRoot() {
-
+        // TODO
     }
 
     void SparkGC::processWeakRefs() {
-
+        // Nothing to do
     }
 
     void SparkGC::collectorTrace() {
-
+        bool clean = false;
+        while (!clean) {
+            clean = true;
+            for (auto m : mutators) {
+                while (m->lastRead < m->lastWrite) {
+                    clean = false;
+                    ++m->lastRead;
+                    collectorMarkBlack(m->markBuffer[m->lastRead]);
+                    emptyMarkBuffer();
+                }
+            }
+        }
     }
 
     void SparkGC::collectorSweep() {
-
+        // Scan the whole heap
+        Addr current = heap->getHeapStart();
+        while (current < heap->getHeapEnd()) {
+            Size offset = offsetOf(current);
+            GCColor color = heapColors.getColor(offset);
+            if (color == clearColor) {
+                heapColors.setColor(offset, GC_COLOR_BLUE);
+            }
+            // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
+            current += 4;
+        }
+        // compact freed space
+        heap->reblock();
     }
 
     void SparkGC::stageClear() {
         postState(GC_CLEAR_OR_MARKING);
+        while (!weakRefs.empty()) {
+            weakRefs.pop();
+        }
+        while (!markBuffer.empty()) {
+            markBuffer.pop();
+        }
         handshakeMutators(GC_SYNC1);
     }
 
@@ -95,7 +125,7 @@ namespace spark {
         waitHandshake();
     }
 
-    void SparkGC::waitHandshake() {
+    void SparkGC::waitHandshake() const {
         Size mutatorCount = mutators.size();
         Size readyCount = 0;
         do {
@@ -119,8 +149,76 @@ namespace spark {
         if (mutator == nullptr) {
             throw std::exception();
         }
+        mutator->allocationColor = getMarkColor();
+        mutator->sparkGC = this;
+        this->mutators.insert(mutator);
     }
 
     void SparkGC::unregisterMutator(SparkMutator *mutator) {
+        if (mutator == nullptr) {
+            throw std::exception();
+        }
+        this->mutators.erase(mutator);
+    }
+
+    void SparkGC::markGray(SparkMutator *m, Addr addr) {
+        Size offset = offsetOf(addr);
+        if (heapColors.getColor(offset) == clearColor) {
+            if (m->lastWrite >= m->markBuffer.size()) {
+                m->markBuffer.push_back(addr);
+                m->lastWrite = m->markBuffer.size();
+            } else {
+                m->markBuffer[m->lastWrite] = addr;
+                ++m->lastWrite;
+            }
+        }
+    }
+
+    Size SparkGC::offsetOf(Addr addr) const {
+        if (addr < heap->getHeapStart()) {
+            throw std::exception();
+        }
+
+        return addr - heap->getHeapStart();
+    }
+
+    Addr SparkGC::allocate(Size size) {
+        return nullptr;
+    }
+
+    void SparkGC::setColor(Addr addr, GCColor color) {
+        heapColors.setColor(offsetOf(addr), color);
+    }
+
+    void SparkGC::collectorMarkGray(Addr addr) {
+        if (heapColors.getColor(offsetOf(addr)) == clearColor) {
+            markBuffer.push(addr);
+        }
+    }
+
+    void SparkGC::collectorMarkBlack(Addr addr) {
+        if (heapColors.getColor(offsetOf(addr)) != markColor) {
+            if (queryIsWeakReference(addr)) {
+                weakRefs.push(addr);
+                // for each pointer p except its referent
+                // collectorMarkGray(p)
+            } else {
+                // for each pointer p belongs to addr
+                // collectorMarkGray(p)
+            }
+            setColor(addr, markColor);
+        }
+    }
+
+    bool SparkGC::queryIsWeakReference(Addr addr) {
+        return false;
+    }
+
+    void SparkGC::emptyMarkBuffer() {
+        while (!markBuffer.empty()) {
+            Addr addr = markBuffer.top();
+            markBuffer.pop();
+            collectorMarkBlack(addr);
+        }
     }
 }
