@@ -6,32 +6,36 @@
 #include <spark/SparkGC_Shared.h>
 #include <spark/CollectedHeap.h>
 #include <spark/CollectedObject.h>
-#include <array>
+#include <spark/ColorBitmap.h>
 #include <vector>
+#include <set>
 
 namespace spark {
     class SparkMutator {
-    private:
+    public:
         SparkGC *sparkGC;
         GCHandshakeState handshakeState;
         Addr lastRead;
         Addr lastWrite;
+        GCColor allocationColor;
         std::vector<CollectedObject *> markBuffer;
 
-    public:
+    private:
+        void update(Addr obj, Addr newObj);
     };
 
     class SparkGC {
     private:
         GCHandshakeState handshakeState;
         GCStage gcStage;
-        GCColor allocationColor;
+        GCColor clearColor;
         GCColor markColor;
+        ColorBitmap heapColors;
         CollectedHeap *heap;
-        std::array<SparkMutator, SPARK_GC_MUTATOR_COUNT> mutators;
+        std::set<SparkMutator *> mutators;
 
     private:
-        SparkGC(CollectedHeap *heap);
+        explicit SparkGC(CollectedHeap *heap);
 
         void stageClear();
 
@@ -41,11 +45,37 @@ namespace spark {
 
         void stageSweep();
 
+        void stageDone();
+
+        void markGlobalRoot();
+
+        void collectorTrace();
+
+        void processWeakRefs();
+
+        void collectorSweep();
+
+        void toggleColor();
+
+        void handshakeMutators(GCHandshakeState state);
+
+        void waitHandshake();
+
+        void postHandshake(GCHandshakeState state);
+
+        void postState(GCStage stage);
+
     public:
         SparkGC(const SparkGC &) = delete;
 
         SparkGC(SparkGC &&) = delete;
 
         ~SparkGC();
+
+        void registerMutator(SparkMutator *mutator);
+
+        void unregisterMutator(SparkMutator *mutator);
+
+        void collect();
     };
 }

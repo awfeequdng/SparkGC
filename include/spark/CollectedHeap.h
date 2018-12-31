@@ -106,7 +106,9 @@ namespace spark {
     private:
         Addr allocateLarge(Size size);
 
-        HeapBlock* newBlockFromUnused(Size size);
+        HeapBlock *newBlockFromUnused(Size size);
+
+        void createBlockTree();
 
     public:
         Tree<HeapBlock *> heapBlocks;
@@ -135,9 +137,15 @@ namespace spark {
             return heapUnusedSize;
         }
 
-        Addr allocate(Size size);
+        Size getBlockCount() const noexcept {
+            return heapBlocks.size();
+        }
 
-        void createBlockTree();
+        Size getMaxBlockCount() const noexcept {
+            return (heapSize / SPARK_GC_HEAP_BLOCK);
+        }
+
+        Addr allocate(Size size);
 
         void dumpHeap(FILE *file);
     };

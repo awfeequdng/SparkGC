@@ -5,8 +5,6 @@
 
 #include <cstdlib>
 
-#define SPARK_GC_MUTATOR_COUNT 2
-
 /**
  * sizeof(intOopDesc)
  */
@@ -35,6 +33,9 @@ namespace spark {
      * A color abstraction is used to indicate the state of
      * an object with respect to collection.
      * Colors are assigned to objects or memory locations.
+     *
+     * Note that: meaning of white and black color may change
+     * after a gc cycle due to the Color Toggle.
      */
     enum GCColor {
         /**
