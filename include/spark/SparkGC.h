@@ -104,5 +104,7 @@ namespace spark {
         GCColor getMarkColor() const noexcept {
             return markColor;
         }
+
+        void markBlock(HeapBlock *block);
     };
 }

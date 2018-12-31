@@ -20,10 +20,12 @@ namespace spark {
 
         SparkMutator();
 
-    private:
-        void markRootElements();
+        virtual ~SparkMutator();
 
     protected:
+        virtual void markGlobalRoot() = 0;
+
+        void markGray(Addr addr);
 
         /**
          * The write barrier during gc.

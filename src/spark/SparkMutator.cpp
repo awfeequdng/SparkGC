@@ -9,6 +9,8 @@ namespace spark {
           handshakeState(GC_ASYNC), allocationColor(GC_COLOR_WHITE) {
     }
 
+    SparkMutator::~SparkMutator() = default;
+
     Addr SparkMutator::allocate(Size size) {
         Addr addr = sparkGC->allocate(size);
         sparkGC->setColor(addr, allocationColor);
@@ -17,10 +19,10 @@ namespace spark {
 
     void SparkMutator::write(CollectedObject *addr, CollectedObject *obj) {
         if (handshakeState != GC_ASYNC) {
-            sparkGC->markGray(this, (Addr) addr);
-            sparkGC->markGray(this, (Addr) obj);
+            markGray((Addr) addr);
+            markGray((Addr) obj);
         } else if (sparkGC->getStage() == GC_TRACING) {
-            sparkGC->markGray(this, (Addr) addr);
+            markGray((Addr) addr);
         }
     }
 
@@ -28,15 +30,15 @@ namespace spark {
         auto state = sparkGC->getHandshakeState();
         if (handshakeState != state) {
             if (handshakeState == GC_SYNC2) {
-                markRootElements();
+                markGlobalRoot();
                 allocationColor = sparkGC->getMarkColor();
             }
             handshakeState = state;
         }
     }
 
-    void SparkMutator::markRootElements() {
-        // TODO
+    void SparkMutator::markGray(Addr addr) {
+        sparkGC->markGray(this, addr);
     }
 }
 

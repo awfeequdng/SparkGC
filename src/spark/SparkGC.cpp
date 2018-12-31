@@ -28,7 +28,22 @@ namespace spark {
     }
 
     void SparkGC::markGlobalRoot() {
-        // TODO
+        for (auto block : heap->fullBlocks) {
+            markBlock(block);
+        }
+    }
+
+
+    void SparkGC::markBlock(HeapBlock *block) {
+        // Scan the whole block
+        Addr current = block->getStart();
+        while (current < block->getEnd()) {
+            auto object = (CollectedObject *) current;
+            collectorMarkBlack(current);
+            emptyMarkBuffer();
+            // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
+            current += object->getOnStackSize();
+        }
     }
 
     void SparkGC::processWeakRefs() {
