@@ -9,15 +9,20 @@
 #include <spark/ColorBitmap.h>
 #include <set>
 #include <stack>
+#include "CollectedObject.h"
+
 
 namespace spark {
     class SparkGC {
+        friend class ColorMarker;
+
     private:
         GCHandshakeState handshakeState;
         GCStage gcStage;
         GCColor clearColor;
         GCColor markColor;
         ColorBitmap heapColors;
+        ColorMarker colorMarker;
         CollectedHeap *heap;
         std::set<SparkMutator *> mutators;
         std::stack<Addr> markBuffer;

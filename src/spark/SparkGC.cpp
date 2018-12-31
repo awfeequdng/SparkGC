@@ -3,12 +3,14 @@
 //
 #include <spark/SparkGC.h>
 #include <spark/SparkMutator.h>
+#include <spark/CollectedObject.h>
 
 namespace spark {
 
     SparkGC::SparkGC(CollectedHeap *heap)
         : heap(heap), handshakeState(GC_ASYNC), gcStage(GC_RESTING),
-          clearColor(GC_COLOR_WHITE), markColor(GC_COLOR_BLACK) {
+          clearColor(GC_COLOR_WHITE), markColor(GC_COLOR_BLACK),
+          colorMarker(this) {
         Size max = heap->getMaxBlockCount() + 1;
         for (int i = 0; i < max; ++i) {
             heapColors.createBitmap();
@@ -55,13 +57,12 @@ namespace spark {
             Size offset = offsetOf(current);
             GCColor color = heapColors.getColor(offset);
             if (color == clearColor) {
+                heap->free(current);
                 heapColors.setColor(offset, GC_COLOR_BLUE);
             }
             // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
             current += 4;
         }
-        // compact freed space
-        heap->reblock();
     }
 
     void SparkGC::stageClear() {
@@ -202,9 +203,12 @@ namespace spark {
                 weakRefs.push(addr);
                 // for each pointer p except its referent
                 // collectorMarkGray(p)
+                // TODO: support weak reference
             } else {
                 // for each pointer p belongs to addr
                 // collectorMarkGray(p)
+                auto object = (CollectedObject *) addr;
+                object->markChildren(colorMarker);
             }
             setColor(addr, markColor);
         }

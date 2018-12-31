@@ -74,7 +74,7 @@ set(SPARK_GC_LIBRARY_SRC
         include/spark/CollectedObject.h
         src/spark/CollectedHeap.cpp
         include/spark/ColorBitmap.h
-        src/spark/SparkGC.cpp src/spark/SparkMutator.cpp include/spark/SparkMutator.h)
+        src/spark/SparkGC.cpp src/spark/SparkMutator.cpp include/spark/SparkMutator.h src/spark/CollectedObject.cpp)
 
 add_library(SparkGC
         ${SPARK_GC_LIBRARY_SRC}

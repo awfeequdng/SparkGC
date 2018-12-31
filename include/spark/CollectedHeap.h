@@ -62,6 +62,8 @@ namespace spark {
     };
 
     class CollectedHeap {
+        friend class SparkGC;
+
         template<typename T>
         using Tree = std::list<T>;
 
@@ -98,7 +100,7 @@ namespace spark {
         Size heapUnusedSize;
         Addr heapStart;
         Addr heapUnUsedStart;
-        Tree<HeapBlock *> freeBlocks;
+        Tree<HeapBlock *> partiallyFreeBlocks;
         Tree<HeapBlock *> fullBlocks;
 
     private:
@@ -109,6 +111,9 @@ namespace spark {
         void createBlockTree();
 
         void sort(Tree<HeapBlock *> &blocks);
+
+    protected:
+        void free(Addr addr);
 
     public:
         CollectedHeap(Addr heapStart, Size heapSize);
@@ -136,7 +141,7 @@ namespace spark {
         }
 
         Size getBlockCount() const noexcept {
-            return freeBlocks.size();
+            return partiallyFreeBlocks.size();
         }
 
         Size getMaxBlockCount() const noexcept {
@@ -146,7 +151,5 @@ namespace spark {
         Addr allocate(Size size);
 
         void dumpHeap(FILE *file);
-
-        void reblock();
     };
 }

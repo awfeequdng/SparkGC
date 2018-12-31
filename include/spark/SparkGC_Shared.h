@@ -26,6 +26,8 @@ namespace spark {
 
     class SparkMutator;
     class SparkGC;
+    class CollectedObject;
+    class ColorMarker;
 
     /**
      * A color abstraction is used to indicate the state of
