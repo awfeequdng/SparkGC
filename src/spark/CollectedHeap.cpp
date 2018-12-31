@@ -5,6 +5,10 @@
 #include <exception>
 
 namespace spark {
+    bool comparator(HeapBlock *lhs, HeapBlock *rhs) {
+        return (*lhs) < (*rhs);
+    }
+
 
     HeapBlock::HeapBlock(Addr blockStart, Size blockSize)
         : blockStart(blockStart), blockSize(blockSize), current(blockStart) {
@@ -35,7 +39,7 @@ namespace spark {
             auto block = newBlockFromUnused(SPARK_GC_HEAP_BLOCK);
             heapBlocks.push_back(block);
         }
-        heapBlocks.sort();
+        sort(heapBlocks);
     }
 
     void CollectedHeap::dumpHeap(FILE *file) {
@@ -76,7 +80,7 @@ namespace spark {
         }
 
         if (!bestFits.empty()) {
-            bestFits.sort();
+            sort(bestFits);
             HeapBlock *selected = bestFits.front();
             return selected->allocate(size);
         }
@@ -97,7 +101,7 @@ namespace spark {
             heapBlocks.push_back(remaining);
         }
 
-        heapBlocks.sort();
+        sort(heapBlocks);
         return obj;
     }
 
@@ -109,5 +113,13 @@ namespace spark {
             return block;
         }
         return nullptr;
+    }
+
+    void CollectedHeap::reblock() {
+        // TODO
+    }
+
+    void CollectedHeap::sort(Tree<HeapBlock *> &blocks) {
+        blocks.sort(comparator);
     }
 }

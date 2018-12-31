@@ -110,6 +110,8 @@ namespace spark {
 
         void createBlockTree();
 
+        void sort(Tree<HeapBlock *> &blocks);
+
     public:
         Tree<HeapBlock *> heapBlocks;
 
@@ -148,5 +150,7 @@ namespace spark {
         Addr allocate(Size size);
 
         void dumpHeap(FILE *file);
+
+        void reblock();
     };
 }
