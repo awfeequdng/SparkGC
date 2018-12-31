@@ -2,16 +2,45 @@
 // Created by kiva on 2018-12-30.
 //
 #include <spark/CollectedHeap.h>
+#include <spark/CollectedObject.h>
 #include <exception>
+#include <vector>
+#include <algorithm>
+
 
 namespace spark {
     static bool comparator(HeapBlock *lhs, HeapBlock *rhs) {
         return (*lhs) < (*rhs);
     }
 
+    static bool comparatorAddress(HeapBlock *lhs, HeapBlock *rhs) {
+        return lhs->getStart() < rhs->getStart();
+    }
+
+    static HeapBlock *searchBlock(const std::vector<HeapBlock *> &all, Addr addr) {
+        int low = 0;
+        int high = all.size() - 1;
+        int mid;
+
+        while (low <= high) {
+            mid = (low + high) / 2;
+            HeapBlock *block = all[mid];
+
+            if (block->inBlock(addr)) {
+                return block;
+            }
+
+            if (block->getStart() > addr) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return nullptr;
+    }
+
     HeapBlock::HeapBlock(Addr blockStart, Size blockSize)
-        : blockStart(blockStart), blockSize(blockSize), current(blockStart) {
-        allocateCounter = 0;
+        : blockStart(blockStart), blockSize(blockSize), current(blockStart), allocateCounter(0) {
     }
 
     HeapBlock *HeapBlock::shrinkToFit() {
@@ -26,6 +55,11 @@ namespace spark {
         return (getRemaining() == other.getRemaining()) ?
                (blockStart < other.blockStart) :
                (getRemaining() < other.getRemaining());
+    }
+
+    void HeapBlock::reset() {
+        current = blockStart;
+        allocateCounter = 0;
     }
 
     CollectedHeap::CollectedHeap(Addr heapStart, Size heapSize)
@@ -64,12 +98,12 @@ namespace spark {
             fprintf(file, "\t\tBlock end        : %p\n", (void *) heapBlock->getEnd());
             fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
             fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
-            fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
+            fprintf(file, "\t\tBlock memoryFreed size  : %zd\n", heapBlock->getRemaining());
             fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getAllocateCounter());
         }
 
         fprintf(file, "\n\n\n");
-        fprintf(file, "Heap free block details: %zd blocks\n", partiallyFreeBlocks.size());
+        fprintf(file, "Heap memoryFreed block details: %zd blocks\n", partiallyFreeBlocks.size());
         index = 0;
         for (auto heapBlock : partiallyFreeBlocks) {
             fprintf(file, "\tChunk %d:\n", index++);
@@ -77,7 +111,7 @@ namespace spark {
             fprintf(file, "\t\tBlock end        : %p\n", (void *) heapBlock->getEnd());
             fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
             fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
-            fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
+            fprintf(file, "\t\tBlock memoryFreed size  : %zd\n", heapBlock->getRemaining());
             fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getAllocateCounter());
         }
     }
@@ -146,7 +180,58 @@ namespace spark {
         blocks.sort(comparator);
     }
 
-    void CollectedHeap::free(Addr addr) {
-        // TODO
+    void CollectedHeap::memoryFreed(const Tree<CollectedObject *> &free) {
+        Tree<HeapBlock *> newPartially;
+        std::vector<HeapBlock *> all;
+        Tree<HeapBlock *> deleteList;
+
+        std::merge(fullBlocks.begin(), fullBlocks.end(),
+            partiallyFreeBlocks.begin(), partiallyFreeBlocks.end(),
+            std::back_inserter(all),
+            comparatorAddress);
+
+        for (auto object : free) {
+            Size size = object->getOnStackSize();
+            Addr start = Addr(object);
+            Addr end = start + size;
+
+            auto block = searchBlock(all, start);
+            if (block == nullptr) {
+                throw std::exception();
+            }
+
+            all.erase(std::remove(all.begin(), all.end(), block), all.end());
+
+            if (block->getRemaining() + size == block->getSize()) {
+                block->reset();
+                newPartially.push_back(block);
+
+            } else {
+                deleteList.push_back(block);
+                auto objBlock = new HeapBlock(start, size);
+                newPartially.push_back(objBlock);
+
+                if (block->getStart() < start) {
+                    auto leftBlock = new HeapBlock(block->getStart(),
+                        start - block->getStart());
+                    all.push_back(leftBlock);
+                }
+
+                if (end < block->getEnd()) {
+                    auto rightBlock = new HeapBlock(end, block->getEnd() - end);
+                    all.push_back(rightBlock);
+                }
+
+                std::sort(all.begin(), all.end(), comparatorAddress);
+            }
+        }
+
+        fullBlocks.clear();
+        for (auto block : all) {
+            fullBlocks.push_back(block);
+        }
+
+        sort(newPartially);
+        partiallyFreeBlocks.swap(newPartially);
     }
 }

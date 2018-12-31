@@ -67,17 +67,21 @@ namespace spark {
 
     void SparkGC::collectorSweep() {
         // Scan the whole heap
+        CollectedHeap::Tree<CollectedObject *> free;
+
         Addr current = heap->getHeapStart();
         while (current < heap->getHeapEnd()) {
             Size offset = offsetOf(current);
             GCColor color = heapColors.getColor(offset);
             if (color == clearColor) {
-                heap->free(current);
+                free.push_back((CollectedObject *) current);
                 heapColors.setColor(offset, GC_COLOR_BLUE);
             }
             // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
             current += 4;
         }
+
+        heap->memoryFreed(free);
     }
 
     void SparkGC::stageClear() {

@@ -27,6 +27,7 @@ namespace spark {
     class SparkMutator;
     class SparkGC;
     class CollectedObject;
+    class CollectedHeap;
     class ColorMarker;
 
     /**
@@ -41,26 +42,26 @@ namespace spark {
         /**
          * Memory that is unallocated.
          */
-        GC_COLOR_BLUE,
+            GC_COLOR_BLUE,
 
         /**
          * Memory that has not been scanned by the collector
          * during the current GC cycle. Memory left white after
          * the collector has completed tracing is garbage.
          */
-        GC_COLOR_WHITE,
+            GC_COLOR_WHITE,
 
         /**
          * Objects marked by the collector, but
          * whose children may have not been marked.
          */
-        GC_COLOR_GRAY,
+            GC_COLOR_GRAY,
 
         /**
          * Objects marked by the collector,
          * whose direct children have also been marked.
          */
-        GC_COLOR_BLACK,
+            GC_COLOR_BLACK,
     };
 
     /**

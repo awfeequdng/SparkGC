@@ -38,8 +38,16 @@ namespace spark {
             return blockSize - getUsed();
         }
 
+        int getAllocateCounter() const {
+            return allocateCounter;
+        }
+
         bool canAfford(Size size) const {
             return getRemaining() >= size;
+        }
+
+        bool inBlock(const Addr addr) const {
+            return addr >= getStart() && addr < getEnd();
         }
 
         Addr allocate(Size size) {
@@ -54,16 +62,15 @@ namespace spark {
 
         bool operator<(const HeapBlock &other) const;
 
-        int getAllocateCounter() const {
-            return allocateCounter;
-        }
-
         HeapBlock *shrinkToFit();
+
+        void reset();
     };
 
     class CollectedHeap {
         friend class SparkGC;
 
+    public:
         template<typename T>
         using Tree = std::list<T>;
 
@@ -75,16 +82,17 @@ namespace spark {
          * @param high high size
          * @return true if it belongs to
          */
-        static bool inRange(Size size, Size low, Size high) {
-            return size > low && size <= high;
+        template<typename T>
+        static bool inRange(T t, T low, T high) {
+            return t > low && t <= high;
         }
 
         static bool isSmallObject(Size size) {
-            return inRange(size, 0, SPARK_GC_HEAP_SMALL);
+            return inRange<Size>(size, 0, SPARK_GC_HEAP_SMALL);
         }
 
         static bool isMediumObject(Size size) {
-            return inRange(size, SPARK_GC_HEAP_SMALL, SPARK_GC_HEAP_MEDIUM);
+            return inRange<Size>(size, SPARK_GC_HEAP_SMALL, SPARK_GC_HEAP_MEDIUM);
         }
 
         static bool isLargeObject(Size size) {
@@ -113,7 +121,7 @@ namespace spark {
         void sort(Tree<HeapBlock *> &blocks);
 
     protected:
-        void free(Addr addr);
+        void memoryFreed(const Tree<CollectedObject*> &free);
 
     public:
         CollectedHeap(Addr heapStart, Size heapSize);
