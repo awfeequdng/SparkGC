@@ -5,10 +5,9 @@
 #include <exception>
 
 namespace spark {
-    bool comparator(HeapBlock *lhs, HeapBlock *rhs) {
+    static bool comparator(HeapBlock *lhs, HeapBlock *rhs) {
         return (*lhs) < (*rhs);
     }
-
 
     HeapBlock::HeapBlock(Addr blockStart, Size blockSize)
         : blockStart(blockStart), blockSize(blockSize), current(blockStart) {
@@ -23,6 +22,12 @@ namespace spark {
         return block;
     }
 
+    bool HeapBlock::operator<(const HeapBlock &other) const {
+        return (getRemaining() == other.getRemaining()) ?
+               (blockStart < other.blockStart) :
+               (getRemaining() < other.getRemaining());
+    }
+
     CollectedHeap::CollectedHeap(Addr heapStart, Size heapSize)
         : heapStart(heapStart), heapSize(heapSize),
           heapUnUsedStart(heapStart), heapUnusedSize(heapSize) {
@@ -33,11 +38,11 @@ namespace spark {
         if (heapSize < SPARK_GC_HEAP_BLOCK) {
             throw std::exception();
         }
-        
+
         // Initially there is only a single block
         auto block = newBlockFromUnused(SPARK_GC_HEAP_BLOCK);
-        heapBlocks.push_back(block);
-        sort(heapBlocks);
+        freeBlocks.push_back(block);
+        sort(freeBlocks);
     }
 
     void CollectedHeap::dumpHeap(FILE *file) {
@@ -45,16 +50,28 @@ namespace spark {
         fprintf(file, "\tHeap start address: %p\n", (void *) getHeapStart());
         fprintf(file, "\tHeap end address  : %p\n", (void *) getHeapEnd());
         fprintf(file, "\tHeap size in bytes: %zd\n", getHeapSize());
-        fprintf(file, "\tHeap pre-sized chunks: %zd(%zd blocks)\n",
-            getHeapUsed(), heapBlocks.size());
+        fprintf(file, "\tHeap blocks       : %zd(%zd blocks)\n",
+            getHeapUsed(), freeBlocks.size() + fullBlocks.size());
         fprintf(file, "\tHeap unused size     : %zd\n", getHeapUnusedSize());
         fprintf(file, "\tHeap unused start    : %p\n", (void *) heapUnUsedStart);
         fprintf(file, "\n");
-        fprintf(file, "Heap pre-sized chunk details: %zd(%zd blocks)\n",
-            getHeapUsed(), heapBlocks.size());
 
         int index = 0;
-        for (auto heapBlock : heapBlocks) {
+        fprintf(file, "Heap full block details: %zd blocks\n", fullBlocks.size());
+        for (auto heapBlock : fullBlocks) {
+            fprintf(file, "\tChunk %d:\n", index++);
+            fprintf(file, "\t\tBlock start      : %p\n", (void *) heapBlock->getStart());
+            fprintf(file, "\t\tBlock end        : %p\n", (void *) heapBlock->getEnd());
+            fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
+            fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
+            fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
+            fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getAllocateCounter());
+        }
+
+        fprintf(file, "\n\n\n");
+        fprintf(file, "Heap free block details: %zd blocks\n", freeBlocks.size());
+        index = 0;
+        for (auto heapBlock : freeBlocks) {
             fprintf(file, "\tChunk %d:\n", index++);
             fprintf(file, "\t\tBlock start      : %p\n", (void *) heapBlock->getStart());
             fprintf(file, "\t\tBlock end        : %p\n", (void *) heapBlock->getEnd());
@@ -71,7 +88,7 @@ namespace spark {
         }
 
         Tree<HeapBlock *> bestFits;
-        for (auto heapBlock : heapBlocks) {
+        for (auto heapBlock : freeBlocks) {
             if (heapBlock->canAfford(size)) {
                 bestFits.push_back(heapBlock);
             }
@@ -79,10 +96,22 @@ namespace spark {
 
         if (!bestFits.empty()) {
             sort(bestFits);
-            HeapBlock *selected = bestFits.front();
-            return selected->allocate(size);
+            auto selected = bestFits.front();
+            Addr addr = selected->allocate(size);
+            if (selected->getRemaining() < SPARK_GC_HEAP_SMALL) {
+                freeBlocks.remove(selected);
+                fullBlocks.push_back(selected);
+            }
+            return addr;
+        } else {
+            auto newBlock = newBlockFromUnused(SPARK_GC_HEAP_BLOCK);
+            if (newBlock == nullptr) {
+                return nullptr;
+            }
+            Addr addr = newBlock->allocate(size);
+            freeBlocks.push_back(newBlock);
+            return addr;
         }
-        return nullptr;
     }
 
     Addr CollectedHeap::allocateLarge(Size size) {
@@ -92,14 +121,14 @@ namespace spark {
         }
 
         Addr obj = newBlock->allocate(size);
-        heapBlocks.push_back(newBlock);
 
-        if (newBlock->getRemaining() > 0) {
+        if (newBlock->getRemaining() >= SPARK_GC_HEAP_SMALL) {
             auto remaining = newBlock->shrinkToFit();
-            heapBlocks.push_back(remaining);
+            freeBlocks.push_back(remaining);
         }
 
-        sort(heapBlocks);
+        fullBlocks.push_back(newBlock);
+        sort(freeBlocks);
         return obj;
     }
 

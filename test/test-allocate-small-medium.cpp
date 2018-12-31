@@ -31,7 +31,7 @@ int main() {
                 SPARK_GC_HEAP_MEDIUM};
     for (int i = 0; i < 50; ++i) {
         Size s = S[static_cast<Size>(rand() % (sizeof(S) / sizeof(S[0])))];
-        heap->allocate(s);
+        assert(heap->allocate(s) != nullptr);
     }
 
     heap->dumpHeap(stdout);

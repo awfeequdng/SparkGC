@@ -52,11 +52,7 @@ namespace spark {
             return nullptr;
         }
 
-        bool operator<(const HeapBlock &other) {
-            return (getRemaining() == other.getRemaining()) ?
-                   (blockStart < other.blockStart) :
-                   (getRemaining() < other.getRemaining());
-        }
+        bool operator<(const HeapBlock &other) const;
 
         int getAllocateCounter() const {
             return allocateCounter;
@@ -102,6 +98,8 @@ namespace spark {
         Size heapUnusedSize;
         Addr heapStart;
         Addr heapUnUsedStart;
+        Tree<HeapBlock *> freeBlocks;
+        Tree<HeapBlock *> fullBlocks;
 
     private:
         Addr allocateLarge(Size size);
@@ -113,8 +111,6 @@ namespace spark {
         void sort(Tree<HeapBlock *> &blocks);
 
     public:
-        Tree<HeapBlock *> heapBlocks;
-
         CollectedHeap(Addr heapStart, Size heapSize);
 
         ~CollectedHeap() = default;
@@ -140,7 +136,7 @@ namespace spark {
         }
 
         Size getBlockCount() const noexcept {
-            return heapBlocks.size();
+            return freeBlocks.size();
         }
 
         Size getMaxBlockCount() const noexcept {
