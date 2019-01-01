@@ -19,6 +19,8 @@
 
 #define SPARK_GC_ALIGN SPARK_GC_HEAP_SMALL
 
+#define SPARK_GC_SWEEP_THREADS 4
+
 namespace spark {
     using Offset = size_t;
 

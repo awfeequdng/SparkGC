@@ -6,8 +6,8 @@
 using namespace spark;
 
 int main() {
-    constexpr Size MEM_128M = 128 * 1024 * 1024;
-    SparkGC* gc = SparkGC::newGC(MEM_128M);
+    constexpr Size MEM_1024M = 1024 * 1024 * 1024;
+    SparkGC* gc = SparkGC::newGC(MEM_1024M);
 
     gc->collect();
     SparkGC::deleteGC(gc);

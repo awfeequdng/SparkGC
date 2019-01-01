@@ -3,6 +3,7 @@
 //
 #include <spark/CollectedHeap.h>
 #include <spark/CollectedObject.h>
+#include <spark/SparkGC.h>
 #include <exception>
 #include <vector>
 #include <algorithm>
@@ -181,7 +182,7 @@ namespace spark {
         blocks.sort(comparator);
     }
 
-    void CollectedHeap::memoryFreed(const Tree<CollectedObject *> &free) {
+    void CollectedHeap::memoryFreed(SparkGC *gc, const Tree<CollectedObject *> &free) {
         Tree<HeapBlock *> newPartially;
         std::vector<HeapBlock *> all;
         Tree<HeapBlock *> deleteList;
@@ -192,6 +193,8 @@ namespace spark {
             comparatorAddress);
 
         for (auto object : free) {
+            gc->setColor(Addr(object), GC_COLOR_BLUE);
+
             Size size = object->getOnStackSize();
             Addr start = Addr(object);
             Addr end = start + size;

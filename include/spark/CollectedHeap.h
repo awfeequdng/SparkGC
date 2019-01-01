@@ -127,7 +127,7 @@ namespace spark {
         void sort(Tree<HeapBlock *> &blocks);
 
     protected:
-        void memoryFreed(const Tree<CollectedObject*> &free);
+        void memoryFreed(SparkGC *gc, const Tree<CollectedObject *> &free);
 
     public:
         CollectedHeap(Addr heapStart, Size heapSize);

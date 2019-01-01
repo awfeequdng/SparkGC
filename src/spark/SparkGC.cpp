@@ -4,6 +4,9 @@
 #include <spark/SparkGC.h>
 #include <spark/SparkMutator.h>
 #include <spark/CollectedObject.h>
+#include <future>
+#include <functional>
+#include <array>
 
 namespace spark {
 
@@ -70,21 +73,43 @@ namespace spark {
 
     void SparkGC::collectorSweep() {
         // Scan the whole heap
-        CollectedHeap::Tree<CollectedObject *> free;
+        using Tree = CollectedHeap::Tree<CollectedObject *>;
+        using Scanner = std::function<Tree(Addr, Addr)>;
+        using Task = std::packaged_task<Tree(Addr, Addr)>;
 
-        Addr current = heap->getHeapStart();
-        while (current < heap->getHeapEnd()) {
-            Size offset = offsetOf(current);
-            GCColor color = heapColors.getColor(offset);
-            if (color == clearColor) {
-                free.push_back((CollectedObject *) current);
-                heapColors.setColor(offset, GC_COLOR_BLUE);
+        Scanner scanner([this](Addr start, Addr end) -> Tree {
+            Tree result;
+            Addr current = start;
+            while (current < end) {
+                Size offset = offsetOf(current);
+                GCColor color = heapColors.getColor(offset);
+                if (color == clearColor) {
+                    result.push_back((CollectedObject *) current);
+                }
+                // move forward
+                current += SPARK_GC_ALIGN;
             }
-            // move forward
-            current += SPARK_GC_ALIGN;
+            return result;
+        });
+
+        Addr heapStart = heap->getHeapStart();
+        Size totalMove = heap->getHeapSize() / SPARK_GC_ALIGN;
+        Size eachMove = totalMove / SPARK_GC_SWEEP_THREADS;
+
+        std::array<Task, SPARK_GC_SWEEP_THREADS> threads;
+        for (int i = 0; i < SPARK_GC_SWEEP_THREADS; ++i) {
+            Addr start = heapStart + i * eachMove;
+            Addr end = start + eachMove;
+            threads[i] = std::packaged_task<Tree(Addr, Addr)>(scanner);
+            threads[i](start, end);
         }
 
-        heap->memoryFreed(free);
+        Tree free = threads[0].get_future().get();
+        for (int i = 1; i < SPARK_GC_SWEEP_THREADS; ++i) {
+            free.merge(threads[i].get_future().get());
+        }
+
+        heap->memoryFreed(this, free);
     }
 
     void SparkGC::stageClear() {
