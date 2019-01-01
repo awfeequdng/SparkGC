@@ -16,6 +16,11 @@ namespace spark {
     class SparkGC {
         friend class ColorMarker;
 
+    public:
+        static SparkGC *newGC(Size size);
+
+        static void deleteGC(SparkGC *gc);
+
     private:
         GCHandshakeState handshakeState;
         GCStage gcStage;
@@ -70,7 +75,6 @@ namespace spark {
         Size offsetOf(Addr addr) const;
 
     public:
-
         SparkGC(const SparkGC &) = delete;
 
         SparkGC(SparkGC &&) = delete;

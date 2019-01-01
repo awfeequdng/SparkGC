@@ -95,3 +95,5 @@ add_test_target(allocate-large-super)
 add_test_target(allocate-small-medium)
 add_test_target(color-bit)
 add_test_target(align)
+add_test_target(gc-allocate)
+

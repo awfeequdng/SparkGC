@@ -133,7 +133,7 @@ namespace spark {
             sort(bestFits);
             auto selected = bestFits.front();
             Addr addr = selected->allocate(size);
-            if (selected->getRemaining() < SPARK_GC_HEAP_SMALL) {
+            if (selected->getRemaining() < SPARK_GC_ALIGN) {
                 partiallyFreeBlocks.remove(selected);
                 fullBlocks.push_back(selected);
             }
@@ -157,7 +157,7 @@ namespace spark {
 
         Addr obj = newBlock->allocate(size);
 
-        if (newBlock->getRemaining() >= SPARK_GC_HEAP_SMALL) {
+        if (newBlock->getRemaining() >= SPARK_GC_ALIGN) {
             auto remaining = newBlock->shrinkToFit();
             partiallyFreeBlocks.push_back(remaining);
         }

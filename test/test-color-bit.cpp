@@ -111,8 +111,8 @@ int main() {
                 obj->getOnStackSize(), obj->getId());
         }
 
-        // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
-        current += 4;
+        // move forward
+        current += SPARK_GC_ALIGN;
     }
 
     delete heap;

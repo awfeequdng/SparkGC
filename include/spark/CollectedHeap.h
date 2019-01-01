@@ -89,7 +89,7 @@ namespace spark {
 
     public:
         static Size align(Size size) {
-            constexpr Size base = SPARK_GC_HEAP_SMALL;
+            constexpr Size base = SPARK_GC_ALIGN;
             return ((size + base - 1) & (~(base - 1)));
         }
 
@@ -152,10 +152,6 @@ namespace spark {
 
         Size getHeapUnusedSize() const noexcept {
             return heapUnusedSize;
-        }
-
-        Size getBlockCount() const noexcept {
-            return partiallyFreeBlocks.size();
         }
 
         Size getMaxBlockCount() const noexcept {

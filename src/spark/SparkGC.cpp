@@ -17,7 +17,10 @@ namespace spark {
         }
     }
 
-    SparkGC::~SparkGC() = default;
+    SparkGC::~SparkGC() {
+        free(heap->getHeapStart());
+        delete heap;
+    }
 
     void SparkGC::collect() {
         stageClear();
@@ -41,7 +44,7 @@ namespace spark {
             auto object = (CollectedObject *) current;
             collectorMarkBlack(current);
             emptyMarkBuffer();
-            // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
+            // move forward
             current += object->getOnStackSize();
         }
     }
@@ -77,8 +80,8 @@ namespace spark {
                 free.push_back((CollectedObject *) current);
                 heapColors.setColor(offset, GC_COLOR_BLUE);
             }
-            // move 4 bytes forward as the unit of our ColorBitmap is 4 bytes
-            current += 4;
+            // move forward
+            current += SPARK_GC_ALIGN;
         }
 
         heap->memoryFreed(free);
@@ -243,5 +246,22 @@ namespace spark {
             markBuffer.pop();
             collectorMarkBlack(addr);
         }
+    }
+
+    SparkGC *SparkGC::newGC(Size size) {
+        Addr m = Addr(malloc(size));
+        if (m == nullptr) {
+            return nullptr;
+        }
+
+        try {
+            auto heap = new CollectedHeap(m, size);
+            return new SparkGC(heap);
+        } catch (std::bad_alloc &ignore) {
+            return nullptr;
+        }
+    }
+
+    void SparkGC::deleteGC(SparkGC *gc) {
     }
 }

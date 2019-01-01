@@ -17,6 +17,8 @@
 
 #define SPARK_GC_HEAP_BLOCK 128
 
+#define SPARK_GC_ALIGN SPARK_GC_HEAP_SMALL
+
 namespace spark {
     using Offset = size_t;
 
