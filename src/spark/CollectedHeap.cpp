@@ -81,10 +81,10 @@ namespace spark {
 
     void CollectedHeap::dumpHeap(FILE *file) {
         fprintf(file, "CollectedHeap\n");
-        fprintf(file, "\tHeap start address: %p\n", (void *) getHeapStart());
-        fprintf(file, "\tHeap end address  : %p\n", (void *) getHeapEnd());
-        fprintf(file, "\tHeap size in bytes: %zd\n", getHeapSize());
-        fprintf(file, "\tHeap blocks       : %zd(%zd blocks)\n",
+        fprintf(file, "\tHeap start address   : %p\n", (void *) getHeapStart());
+        fprintf(file, "\tHeap end address     : %p\n", (void *) getHeapEnd());
+        fprintf(file, "\tHeap size in bytes   : %zd\n", getHeapSize());
+        fprintf(file, "\tHeap blocks          : %zd(%zd blocks)\n",
             getHeapUsed(), partiallyFreeBlocks.size() + fullBlocks.size());
         fprintf(file, "\tHeap unused size     : %zd\n", getHeapUnusedSize());
         fprintf(file, "\tHeap unused start    : %p\n", (void *) heapUnUsedStart);
@@ -98,12 +98,12 @@ namespace spark {
             fprintf(file, "\t\tBlock end        : %p\n", (void *) heapBlock->getEnd());
             fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
             fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
-            fprintf(file, "\t\tBlock memoryFreed size  : %zd\n", heapBlock->getRemaining());
+            fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
             fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getAllocateCounter());
         }
 
         fprintf(file, "\n\n\n");
-        fprintf(file, "Heap memoryFreed block details: %zd blocks\n", partiallyFreeBlocks.size());
+        fprintf(file, "Heap free block details: %zd blocks\n", partiallyFreeBlocks.size());
         index = 0;
         for (auto heapBlock : partiallyFreeBlocks) {
             fprintf(file, "\tChunk %d:\n", index++);
@@ -111,12 +111,13 @@ namespace spark {
             fprintf(file, "\t\tBlock end        : %p\n", (void *) heapBlock->getEnd());
             fprintf(file, "\t\tBlock total size : %zd\n", heapBlock->getSize());
             fprintf(file, "\t\tBlock used size  : %zd\n", heapBlock->getUsed());
-            fprintf(file, "\t\tBlock memoryFreed size  : %zd\n", heapBlock->getRemaining());
+            fprintf(file, "\t\tBlock free size  : %zd\n", heapBlock->getRemaining());
             fprintf(file, "\t\tAllocate Counter : %d\n", heapBlock->getAllocateCounter());
         }
     }
 
-    Addr CollectedHeap::allocate(Size size) {
+    Addr CollectedHeap::allocate(Size rawSize) {
+        Size size = align(rawSize);
         if (isLargeObject(size)) {
             return allocateLarge(size);
         }

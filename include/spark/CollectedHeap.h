@@ -87,6 +87,12 @@ namespace spark {
             return t > low && t <= high;
         }
 
+    public:
+        static Size align(Size size) {
+            constexpr Size base = SPARK_GC_HEAP_SMALL;
+            return ((size + base - 1) & (~(base - 1)));
+        }
+
         static bool isSmallObject(Size size) {
             return inRange<Size>(size, 0, SPARK_GC_HEAP_SMALL);
         }
@@ -156,7 +162,7 @@ namespace spark {
             return (heapSize / SPARK_GC_HEAP_BLOCK);
         }
 
-        Addr allocate(Size size);
+        Addr allocate(Size rawSize);
 
         void dumpHeap(FILE *file);
     };

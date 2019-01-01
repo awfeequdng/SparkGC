@@ -203,7 +203,7 @@ namespace spark {
     }
 
     Addr SparkGC::allocate(Size size) {
-        return nullptr;
+        return heap->allocate(size);
     }
 
     void SparkGC::setColor(Addr addr, GCColor color) {

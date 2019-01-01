@@ -13,7 +13,7 @@
 /**
  * sizeof(instanceOopDesc)
  */
-#define SPARK_GC_HEAP_MEDIUM 48
+#define SPARK_GC_HEAP_MEDIUM 64
 
 #define SPARK_GC_HEAP_BLOCK 128
 

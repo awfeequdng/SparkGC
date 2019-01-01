@@ -19,6 +19,9 @@ public:
         return size;
     }
 
+    void markChildren(spark::ColorMarker &marker) override {
+    }
+
     int getId() const {
         return id;
     }

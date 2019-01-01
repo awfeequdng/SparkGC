@@ -4,7 +4,7 @@
 Our heap manager uses a two-level allocation scheme. We divide objects into 4 types: small, medium, large and super, using a different allocation scheme for each. As allocation of small and medium objects is a frequent operation, and therefore we designed small and medium object allocation for efficiency. Large and super object allocation is less frequent, and also slower due to block increments.
 
 ### Small, Medium, Large and Super Objects
-We divide memory into blocks (in SparkGC's implementation we choose the block size to be `SPARK_GC_HEAP_BLOCK`, namely 128 bytes). An object is small if its size is between `0` and `SPARK_GC_HEAP_SMALL`, medium if its size is between `SPARK_GC_HEAP_SMALL` and `SPARK_GC_HEAP_MEDIUM`, large if its size is greater than one third of a block, and super if its size is greater than that of a block (namely `SPARK_GC_HEAP_BLOCK`). 
+We divide memory into blocks (in SparkGC's implementation we choose the block size to be `SPARK_GC_HEAP_BLOCK`, namely 128 bytes). An object is small if its size is between `0` and `SPARK_GC_HEAP_SMALL`, medium if its size is between `SPARK_GC_HEAP_SMALL` and `SPARK_GC_HEAP_MEDIUM`, large if its size is greater than half of a block, and super if its size is greater than that of a block (namely `SPARK_GC_HEAP_BLOCK`). 
 
 ### Allocation Strategy
 Ranges of free memory blocks are held in a list sorted first by size and then by address. We call these blocks `HeapBlock`s (also `pre-sized chunk`s).
