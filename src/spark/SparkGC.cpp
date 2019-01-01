@@ -34,22 +34,7 @@ namespace spark {
     }
 
     void SparkGC::markGlobalRoot() {
-        for (auto block : heap->fullBlocks) {
-            markBlock(block);
-        }
-    }
-
-
-    void SparkGC::markBlock(HeapBlock *block) {
-        // Scan the whole block
-        Addr current = block->getStart();
-        while (current < block->getEnd()) {
-            auto object = (CollectedObject *) current;
-            collectorMarkBlack(current);
-            emptyMarkBuffer();
-            // move forward
-            current += object->getOnStackSize();
-        }
+        // Nothing to do
     }
 
     void SparkGC::processWeakRefs() {
