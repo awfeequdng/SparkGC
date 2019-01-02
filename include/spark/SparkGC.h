@@ -9,7 +9,6 @@
 #include <spark/ColorBitmap.h>
 #include <set>
 #include <stack>
-#include "CollectedObject.h"
 
 
 namespace spark {
