@@ -12,14 +12,14 @@ using namespace spark;
 using Int = int64_t;
 
 struct Vec2 : public CollectedObject {
-    Int x;
-    Int y;
+    Int x{0};
+    Int y{0};
 
-    virtual Size getOnStackSize() override {
+    Size getOnStackSize() override {
         return sizeof(*this);
     }
 
-    virtual void markChildren(ColorMarker &marker) override {
+    void markChildren(ColorMarker &marker) override {
     }
 };
 
@@ -41,7 +41,7 @@ private:
     bool wait;
 
 protected:
-    virtual void markGlobalRoot() override {
+    void markGlobalRoot() override {
         for (auto obj : stack) {
             markGray(obj);
         }
