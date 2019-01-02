@@ -199,6 +199,9 @@ namespace spark {
             Addr start = Addr(object);
             Addr end = start + size;
 
+            printf("*** SparkGC *** : Sweeping object %p (sized %zd)\n",
+                object, size);
+
             auto block = searchBlock(all, start);
             if (block == nullptr) {
                 throw std::exception();

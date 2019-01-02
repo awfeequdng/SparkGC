@@ -51,7 +51,8 @@ set(SPARK_GC_LIBRARY_SRC
         src/spark/SparkGC.cpp
         src/spark/SparkMutator.cpp
         include/spark/SparkMutator.h
-        src/spark/CollectedObject.cpp include/spark/SparkGC_All.h)
+        src/spark/CollectedObject.cpp
+        include/spark/SparkGC_All.h)
 
 add_library(SparkGC
         ${SPARK_GC_LIBRARY_SRC}
@@ -71,3 +72,7 @@ add_test_target(color-bit)
 add_test_target(align)
 add_test_target(gc-allocate)
 
+#### examples
+add_executable(example_SimpleVM
+        examples/SimpleVM/main.cpp)
+target_link_libraries(example_SimpleVM SparkGC)

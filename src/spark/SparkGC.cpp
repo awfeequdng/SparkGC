@@ -9,7 +9,6 @@
 #include <array>
 
 namespace spark {
-
     SparkGC::SparkGC(CollectedHeap *heap)
         : heap(heap), handshakeState(GC_ASYNC), gcStage(GC_RESTING),
           clearColor(GC_COLOR_WHITE), markColor(GC_COLOR_BLACK),

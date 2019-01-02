@@ -19,10 +19,10 @@ namespace spark {
 
     void SparkMutator::write(CollectedObject *addr, CollectedObject *obj) {
         if (handshakeState != GC_ASYNC) {
-            markGray((Addr) addr);
-            markGray((Addr) obj);
+            markGray(addr);
+            markGray(obj);
         } else if (sparkGC->getStage() == GC_TRACING) {
-            markGray((Addr) addr);
+            markGray(addr);
         }
     }
 
@@ -37,8 +37,8 @@ namespace spark {
         }
     }
 
-    void SparkMutator::markGray(Addr addr) {
-        sparkGC->markGray(this, addr);
+    void SparkMutator::markGray(CollectedObject *object) {
+        sparkGC->markGray(this, Addr(object));
     }
 }
 

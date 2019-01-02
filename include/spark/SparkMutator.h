@@ -25,7 +25,7 @@ namespace spark {
     protected:
         virtual void markGlobalRoot() = 0;
 
-        void markGray(Addr addr);
+        void markGray(CollectedObject *object);
 
         /**
          * The write barrier during gc.
