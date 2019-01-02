@@ -19,9 +19,9 @@ namespace spark {
     }
 
     static HeapBlock *searchBlock(const std::vector<HeapBlock *> &all, Addr addr) {
-        int low = 0;
-        int high = all.size() - 1;
-        int mid;
+        Size low = 0;
+        Size high = all.size() - 1;
+        Size mid;
 
         while (low <= high) {
             mid = (low + high) / 2;
@@ -199,8 +199,8 @@ namespace spark {
             Addr start = Addr(object);
             Addr end = start + size;
 
-            printf("*** SparkGC *** : Sweeping object %p (sized %zd)\n",
-                object, size);
+            DEBUG(printf("*** SparkGC *** : Sweeping object %p (sized %zd)\n",
+                object, size));
 
             auto block = searchBlock(all, start);
             if (block == nullptr) {

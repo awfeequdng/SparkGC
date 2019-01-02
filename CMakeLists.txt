@@ -11,8 +11,6 @@ require_c_11()
 
 if (DEFINED ENV{SPARK_DEBUG_ALL})
     add_definitions(-DSPARK_DEBUG)
-    add_definitions(-DSPARK_INTERPRETER_DEBUG)
-    add_definitions(-DSPARK_CLASSPATH_DEBUG)
 endif ()
 
 #### Determine arch

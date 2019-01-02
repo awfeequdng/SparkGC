@@ -21,6 +21,12 @@
 
 #define SPARK_GC_SWEEP_THREADS 4
 
+#ifdef SPARK_DEBUG
+#define DEBUG(area) do { area; } while (0)
+#else
+#define DEBUG(...)
+#endif
+
 namespace spark {
     using Offset = size_t;
 
