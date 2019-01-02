@@ -70,7 +70,7 @@ public:
         Addr addr = this->allocate(sizeof(T));
         if (addr == nullptr) {
             doGCWait();
-            addr = gc->allocate(sizeof(T));
+            addr = this->allocate(sizeof(T));
         }
         if (addr == nullptr) {
             throw std::bad_alloc();
