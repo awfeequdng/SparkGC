@@ -70,7 +70,23 @@ add_test_target(color-bit)
 add_test_target(align)
 add_test_target(gc-allocate)
 
-#### examples
+#### examples: SimpleVM
 add_executable(example_SimpleVM
         examples/SimpleVM/main.cpp)
 target_link_libraries(example_SimpleVM SparkGC)
+
+#### examples: TinyVM
+add_executable(example_TinyVM
+        examples/tiny-vm/include/vm/allocator.hpp
+        examples/tiny-vm/include/vm/core.hpp
+        examples/tiny-vm/include/vm/exception.hpp
+        examples/tiny-vm/include/vm/instructions.hpp
+        examples/tiny-vm/include/vm/memory.hpp
+        examples/tiny-vm/include/vm/vm.hpp
+        examples/tiny-vm/include/vm/bytestream.hpp
+        examples/tiny-vm/test/main.cpp)
+
+target_include_directories(example_TinyVM
+        PRIVATE
+        examples/tiny-vm/include)
+target_link_libraries(example_TinyVM SparkGC)
